@@ -50,8 +50,6 @@ import android.widget.Toast;
 import com.alex.livertmppushsdk.FdkAacEncode;
 import com.alex.livertmppushsdk.RtmpSessionManager;
 import com.alex.livertmppushsdk.SWVideoEncoder;
-import com.example.administrator.mybooklibrary.R;
-
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -105,47 +103,43 @@ public class LiveActivity extends Activity {
         @Override
         public void run() {
             while (!mH264EncoderThread.interrupted() && mStartFlag) {
-                uploadCloud();
+                int iSize = mYUVQueue.size();
+                if (iSize > 0) {
+                    mYuvQueueLock.lock();
+                    byte[] yuvData = mYUVQueue.poll();
+                    if (iSize > 9) {
+                        Log.i(LOG_TAG, "###YUV Queue len=" + mYUVQueue.size() + ", YUV length=" + yuvData.length);
+                    }
+                    mYuvQueueLock.unlock();
+                    if (yuvData == null) {
+                        continue;
+                    }
+                    if (mIsFront) {
+                        mYuvEdit = mSwEncH264.YUV420pRotate270(yuvData, HEIGHT_DEF, WIDTH_DEF);
+                    } else {
+                        mYuvEdit = mSwEncH264.YUV420pRotate90(yuvData, HEIGHT_DEF, WIDTH_DEF);
+                    }
+                    byte[] h264Data = mSwEncH264.EncoderH264(mYuvEdit);
+                    if (h264Data != null) {
+                        mRtmpSessionMgr.InsertVideoData(h264Data);
+                        if (DEBUG_ENABLE) {
+                            try {
+                                mOutputStream.write(h264Data);
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                    }
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                mYUVQueue.clear();
             }
         }
     };
-    private void uploadCloud(){
-        int iSize = mYUVQueue.size();
-        if (iSize > 0) {
-            mYuvQueueLock.lock();
-            byte[] yuvData = mYUVQueue.poll();
-            if (iSize > 9) {
-                Log.i(LOG_TAG, "###YUV Queue len=" + mYUVQueue.size() + ", YUV length=" + yuvData.length);
-            }
-            mYuvQueueLock.unlock();
-            if (yuvData == null) {
-                mYUVQueue.clear();
-                return;
-            }
-            if (mIsFront) {
-                mYuvEdit = mSwEncH264.YUV420pRotate270(yuvData, HEIGHT_DEF, WIDTH_DEF);
-            } else {
-                mYuvEdit = mSwEncH264.YUV420pRotate90(yuvData, HEIGHT_DEF, WIDTH_DEF);
-            }
-            byte[] h264Data = mSwEncH264.EncoderH264(mYuvEdit);
-            if (h264Data != null) {
-                mRtmpSessionMgr.InsertVideoData(h264Data);
-                if (DEBUG_ENABLE) {
-                    try {
-                        mOutputStream.write(h264Data);
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                }
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        mYUVQueue.clear();
-    }
     private Runnable mAacEncoderRunnable = new Runnable() {
         @Override
         public void run() {

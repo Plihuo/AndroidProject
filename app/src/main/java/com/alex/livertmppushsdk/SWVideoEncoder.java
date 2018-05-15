@@ -1,6 +1,6 @@
 package com.alex.livertmppushsdk;
 
-import android.media.MediaCodecInfo;
+import android.util.Log;
 
 public class SWVideoEncoder {
 	private int _iWidth;
@@ -55,8 +55,7 @@ public class SWVideoEncoder {
     	if(YUVOrigin.length != _iWidth*_iHeight*3/2){
     		return null;
     	}
-    	
-    	byte[] h264data = _OpenH264Encoder.EncodeH264frame(_iHandle, /*_YUV420*/YUVOrigin);
+    	byte[] h264data = _OpenH264Encoder.EncodeH264frame(_iHandle,YUVOrigin);
     	return h264data;
     }
     
