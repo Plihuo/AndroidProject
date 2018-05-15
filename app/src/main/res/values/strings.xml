@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">MyBookLibrary</string>
+    <string name="app_name">Live</string>
+    <string name="live_button">直播</string>
+    <string name="switch_button">切换</string>
 </resources>
