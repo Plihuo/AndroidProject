@@ -74,19 +74,16 @@ public class RtmpSessionManager {
                     }
                     continue;
                 }
-                //Log.i(TAG, "VideoQueue length="+_videoDataQueue.size()+", AudioQueue length="+_audioDataQueue.size());
                 for(int i = 0; i < 100; i++){
                     byte[] audioData = GetAndReleaseAudioQueue();
                     if(audioData == null){
                         break;
                     }
-                    //Log.i(TAG, "###RtmpSendAudioData:"+audioData.length);
                     _rtmpSession.RtmpSendAudioData(_rtmpHandle, audioData, audioData.length);
                 }
 
                 byte[] videoData = GetAndReleaseVideoQueue();
                 if(videoData != null){
-                    //Log.i(TAG, "$$$RtmpSendVideoData:"+videoData.length);
                     _rtmpSession.RtmpSendVideoData(_rtmpHandle, videoData, videoData.length);
                 }
                 try {
