@@ -456,6 +456,8 @@ public class LiveActivity extends Activity {
         }else{
             mCameraId = "" + CameraCharacteristics.LENS_FACING_FRONT;
         }
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(mCameraId);
+
         mCameraManager.openCamera(mCameraId, stateCallback, mCameraHandler);
     }
     private CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback(){
