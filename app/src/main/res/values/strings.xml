@@ -2,4 +2,8 @@
     <string name="app_name">Live</string>
     <string name="live_button">直播</string>
     <string name="switch_button">切换</string>
+    <string name="record_video">录像</string>
+    <string name="capture_picture">拍照</string>
+    <string name="stop_record">停止</string>
+    <string name="video_name">视频名称</string>
 </resources>
