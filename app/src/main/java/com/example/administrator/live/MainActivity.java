@@ -1,4 +1,4 @@
-package com.plihuo.cameraproject;
+package com.example.administrator.live;
 
 import android.Manifest;
 import android.app.Activity;
