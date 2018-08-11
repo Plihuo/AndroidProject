@@ -1,5 +1,4 @@
 package com.alex.livertmppushsdk;
-
 public class SWVideoEncoder {
 	private int _iWidth;
 	private int _iHeight;
@@ -48,8 +47,8 @@ public class SWVideoEncoder {
     
     public byte[] EncoderH264(byte[] YUVOrigin){
     	if(YUVOrigin == null){
-    		return null;
-    	}
+			return null;
+		}
     	if(YUVOrigin.length != _iWidth*_iHeight*3/2){
     		return null;
     	}

@@ -95,7 +95,7 @@ public class LiveActivity extends Activity {
     private int mCameraCodecType = ImageFormat.YV12;
     private byte[] mYuvEdit = new byte[WIDTH_DEF * HEIGHT_DEF * 3 / 2];
     private RtmpSessionManager mRtmpSessionMgr = null;
-    private Queue<byte[]> mYUVQueue = new LinkedList<byte[]>();
+    private static Queue<byte[]> mYUVQueue = new LinkedList<byte[]>();
     private Lock mYuvQueueLock = new ReentrantLock();
     private Thread mH264EncoderThread = null;
     private ImageReader mImageReader = null;
@@ -103,10 +103,11 @@ public class LiveActivity extends Activity {
         @Override
         public void run() {
             while (!mH264EncoderThread.interrupted() && mStartFlag) {
+                mYuvQueueLock.lock();
                 int iSize = mYUVQueue.size();
+                Log.d("liangpan","processFrame iSize========="+iSize);
                 if (iSize > 0) {
-                    mYuvQueueLock.lock();
-                    byte[] yuvData = mYUVQueue.poll();
+                    byte[] yuvData = fetchData();
                     if (iSize > 9) {
                         Log.i(LOG_TAG, "###YUV Queue len=" + mYUVQueue.size() + ", YUV length=" + yuvData.length);
                     }
@@ -200,14 +201,43 @@ public class LiveActivity extends Activity {
         if (!mStartFlag) {
             return;
         }
+        if (mIsFront) {
+            mYuvEdit = mSwEncH264.YUV420pRotate270(yuv420, HEIGHT_DEF, WIDTH_DEF);
+        } else {
+            mYuvEdit = mSwEncH264.YUV420pRotate90(yuv420, HEIGHT_DEF, WIDTH_DEF);
+        }
+        Log.i("liangpan", "processFrame mYuvEdit========"+mYuvEdit);
+        byte[] h264Data = mSwEncH264.EncoderH264(mYuvEdit);
+        Log.i("liangpan", "processFrame h264Data========"+h264Data);
+        if (h264Data != null) {
+            mRtmpSessionMgr.InsertVideoData(h264Data);
+            if (DEBUG_ENABLE) {
+                try {
+                    mOutputStream.write(h264Data);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        //addData(yuv420);
+    }
+    private synchronized void addData(byte[] yuv420){
         mYuvQueueLock.lock();
         if (mYUVQueue.size() > 1) {
             mYUVQueue.clear();
         }
-        Log.i("liangpan", "processFrame mYUVQueue.offer========"+yuv420.length);
-        mYUVQueue.offer(yuv420);
+        Log.i("liangpan", "processFrame yuv420.length========"+yuv420.length);
+        mYUVQueue.add(yuv420);
         mYuvQueueLock.unlock();
-        Log.i("liangpan", "processFrame mYUVQueue.offer========"+mYUVQueue.size());
+        Log.i("liangpan", "processFrame mYUVQueue.size()========"+mYUVQueue.size());
+    }
+    private synchronized byte[] fetchData(){
+        return mYUVQueue.poll();
     }
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void initCamera() throws CameraAccessException {
@@ -269,9 +299,9 @@ public class LiveActivity extends Activity {
         mSwEncH264 = new SWVideoEncoder(WIDTH_DEF, HEIGHT_DEF, FRAMERATE_DEF, BITRATE_DEF);
         mSwEncH264.start(iFormat);
         mStartFlag = true;
-        mH264EncoderThread = new Thread(mH264Runnable);
-        mH264EncoderThread.setPriority(Thread.MAX_PRIORITY);
-        mH264EncoderThread.start();
+        //mH264EncoderThread = new Thread(mH264Runnable);
+        //mH264EncoderThread.setPriority(Thread.MAX_PRIORITY);
+        //mH264EncoderThread.start();
         mAudioRecoder.startRecording();
         mAacEncoderThread = new Thread(mAacEncoderRunnable);
         mAacEncoderThread.setPriority(Thread.MAX_PRIORITY);
